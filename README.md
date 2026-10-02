@@ -1,37 +1,37 @@
 # Alterdune
 
-Jeu de rôle en console développé en C++, dans le cadre d'un projet de Programmation Orientée Objet.
+Console role-playing game developed in C++ as part of an Object-Oriented Programming project.
 
-L'objectif était de construire un vrai système de combat tour par tour avec une architecture propre derrière (héritage, classes abstraites, polymorphisme), plutôt qu'un script avec des `if` partout.
+The goal was to build a real turn-based combat system backed by a clean architecture (inheritance, abstract classes, polymorphism), rather than a script with `if` statements everywhere.
 
 ## Architecture
 
-Player et Monster héritent tous les deux d'Entity, qui porte les attributs de base (nom, HP, attaque, défense) et déclare `attack()` en pure virtuelle. Ni Entity ni Monster ne sont instanciables directement.
+Player and Monster both inherit from Entity, which holds the base attributes (name, HP, attack, defense) and declares `attack()` as pure virtual. Neither Entity nor Monster can be instantiated directly.
 
-Monster est ensuite décliné en 3 catégories, NormalMonster, MiniBoss et Boss, qui héritent de Monster et redéfinissent `attack()` et `getMaxActions()` chacune avec son propre comportement (2, 3 ou 4 actions disponibles, fourchette de dégâts différente).
+Monster is then split into 3 categories, NormalMonster, MiniBoss and Boss, which inherit from Monster and each override `attack()` and `getMaxActions()` with their own behavior (2, 3 or 4 available actions, different damage ranges).
 
-Les monstres sont stockés dans un `vector<Monster*>`. Quand le GameManager appelle `enemy->attack(player)`, c'est la vtable qui décide quelle version est exécutée : aucun `switch` sur la catégorie dans la logique de combat. Le même appel `attack()` produit donc des résultats radicalement différents selon le vrai type de l'entité.
+Monsters are stored in a `vector<Monster*>`. When the GameManager calls `enemy->attack(player)`, the vtable decides which version gets executed: there is no `switch` on the category in the combat logic. The same `attack()` call therefore produces radically different results depending on the entity's actual type.
 
-Chaque dégât est tiré dans une fourchette via un générateur Mersenne Twister (`mt19937`) plutôt que `rand()`, pour une meilleure qualité statistique, avec une seed unique partagée par toutes les entités (`static`). Le tirage est refait à chaque attaque, donc deux combats contre le même ennemi ne se déroulent jamais exactement pareil.
+Each damage value is drawn from a range using a Mersenne Twister generator (`mt19937`) rather than `rand()`, for better statistical quality, with a single seed shared by all entities (`static`). The roll happens on every attack, so two fights against the same enemy never play out exactly the same way.
 
-## Combat et progression
+## Combat and Progression
 
-Le combat repose sur 4 actions : FIGHT (dégâts), ACT (catalogue de 8 actions textuelles, dont 2 à impact négatif), ITEM (soin) et MERCY (épargner l'ennemi).
+Combat is built around 4 actions: FIGHT (damage), ACT (a catalog of 8 text-based actions, 2 of which have a negative effect), ITEM (healing) and MERCY (spare the enemy).
 
-Chaque monstre a une jauge `mercyGauge` bornée entre 0 et son `mercyGoal`, MERCY n'est disponible que si la jauge est pleine. Le joueur gagne de l'XP différenciée selon l'ennemi vaincu (+2 / +3 / +5) et monte de niveau automatiquement.
+Each monster has a `mercyGauge` bounded between 0 and its `mercyGoal`, and MERCY is only available once the gauge is full. The player earns different amounts of XP depending on the enemy defeated (+2 / +3 / +5) and levels up automatically.
 
-La difficulté progresse dans le temps : les MiniBoss n'apparaissent qu'après 3 combats, les Boss qu'à partir de 7 victoires. La partie se termine sur une des 3 fins possibles (Pacifiste, Neutre, Génocidaire) selon le style de jeu.
+Difficulty increases over time: MiniBosses only appear after 3 fights, and Bosses only from 7 victories onward. The game ends with one of 3 possible endings (Pacifist, Neutral, Genocide) depending on the player's style.
 
-## Données
+## Data
 
-Les monstres et objets sont chargés depuis des fichiers CSV (`monsters.csv`, `items.csv`) avec `ifstream` et `stringstream`, avec gestion des lignes mal formées via `try/catch`. Le fichier fourni contient 45 monstres uniques (26 normaux, 13 mini-boss, 6 boss).
+Monsters and items are loaded from CSV files (`monsters.csv`, `items.csv`) using `ifstream` and `stringstream`, with malformed lines handled through `try/catch`. The provided file contains 45 unique monsters (26 normal, 13 mini-bosses, 6 bosses).
 
-Chaque combat est archivé dans un journal (`history.txt`) via une structure légère `BestiaryEntry`, plutôt qu'en manipulant plusieurs listes parallèles.
+Each fight is recorded in a log (`history.txt`) through a lightweight `BestiaryEntry` structure, rather than by juggling several parallel lists.
 
 ## Tests
 
-4 tests unitaires s'exécutent automatiquement au lancement (`runUnitTests`) avant le menu principal : dégâts reçus, système Mercy, level up, et réinitialisation du joueur à un état propre.
+4 unit tests run automatically at startup (`runUnitTests`) before the main menu: damage taken, the Mercy system, level up, and resetting the player to a clean state.
 
-## Outils utilisés
+## Tools Used
 
-C++, STL (`vector`, `map`), `<random>` (Mersenne Twister), `ifstream` / `stringstream`, POO (héritage, classes abstraites, polymorphisme)
+C++, STL (`vector`, `map`), `<random>` (Mersenne Twister), `ifstream` / `stringstream`, OOP (inheritance, abstract classes, polymorphism)
